@@ -216,22 +216,22 @@ class AddressBook(UserDict):
             result = "The address book is empty"
         elif args[1] == "all":
             result = ""
-            for value in self.values():
-                result += str(value)
+            for record in self.values():
+                result += str(record)
         else:
             name_key, phone_key = tuple(args[1:3])
             name_string = args[name_key+1] if name_key else None
             phone_string = args[phone_key+1] if phone_key else None
             result = ""
-            for key, value in self.items():
+            for key, record in self.items():
                 found_in_phones = False
                 if phone_key:
-                    for phone in value.phones:
+                    for phone in record.phones:
                         if phone_string in phone.value:
                             found_in_phones = True
                             break
                 if (name_string and name_string.casefold() in key.casefold()) or found_in_phones:
-                    result += str(value)
+                    result += str(record)
         return result
     
     def load_from_file(self, file_name):
@@ -264,8 +264,8 @@ class AddressBookIterator:
         result = ""
         for _ in range(N):
             key = self.keys[self.current_index]
-            value = self.address_book[key]
-            result += str(value)
+            record = self.address_book[key]
+            result += str(record)
             self.current_index += 1
             if self.current_index >= self.len_keys:
                 break
