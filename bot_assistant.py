@@ -1,4 +1,3 @@
-import pickle
 from classes import AddressBook
 
 
@@ -114,11 +113,8 @@ def parser(text):
 
 
 def main():
-    try:
-        with open("data.bin", "rb") as fh:
-            address_book = pickle.load(fh)
-    except (FileNotFoundError, MemoryError):
-        address_book = AddressBook()
+    address_book = AddressBook()
+    address_book.load_from_file("data.bin")
 
     while True:
         user_input = input(">>> ")
@@ -138,8 +134,7 @@ def main():
         print(f"\nPage {i+1}\n")
         print(record)
 
-    with open("data.bin", "wb") as fh:
-        pickle.dump(address_book, fh)
+    address_book.save_to_file("data.bin")
 
 
 if __name__ == "__main__":

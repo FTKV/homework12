@@ -1,5 +1,6 @@
 from collections import deque, UserDict
 from datetime import datetime
+import pickle
 
 
 DATE_FORMAT = "%d.%m.%Y"
@@ -232,6 +233,19 @@ class AddressBook(UserDict):
                 if (name_string and name_string.casefold() in key.casefold()) or found_in_phones:
                     result += str(value)
         return result
+    
+    def load_from_file(self, file_name):
+        try:
+            with open(file_name, "rb") as fh:
+                self.data = pickle.load(fh)
+                return "Load suscces"
+        except:
+            return "File not found, corrupted or empty"
+        
+    def save_to_file(self, file_name):
+        with open(file_name, "wb") as fh:
+            pickle.dump(self, fh)
+            return "Save success"
 
 
 class AddressBookIterator:
