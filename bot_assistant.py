@@ -164,6 +164,7 @@ def main():
         type_data = type(data)
         if type_data == list:
             result = command(address_book, *data)
+            address_book.save_to_file("data.bin")
         elif type_data == str:
             result = command(data)
         else:
@@ -175,8 +176,6 @@ def main():
     for i, record in enumerate(address_book.iterator()):
         print(f"\nPage {i+1}\n")
         print(record)
-
-    address_book.save_to_file("data.bin")
 
 
 if __name__ == "__main__":
