@@ -34,7 +34,7 @@ class Birthday(Field):
     def value(self, value):
         try:
             self.__value = datetime.strptime(value, DATE_FORMAT).date()
-        except ValueError:
+        except (TypeError, ValueError):
             pass
 
 
@@ -135,44 +135,39 @@ class AddressBook(UserDict):
     def iterator(self):
         return AddressBookIterator(self)
 
-    def add_record(self, *args):
-        name_key, phone_key, birthday_key = tuple(args[1:4])
-        name = Name(args[name_key+1].title())
+    def add_record(self, name, *phones, birthday=None):
+        name = Name(name)
+        phones = list(map(Phone, phones))
+        birthday = Birthday(birthday)
         if not name:
             return "The name is invalid"
         key = str(name)
         if key in self.data.keys():
-            if not phone_key and not birthday_key:
+            if not phones and not birthday:
                 return "The contact is exist"
             else:
-                if phone_key:
-                    phones = map(Phone, args[phone_key+1:birthday_key if birthday_key else len(args)]) if phone_key else []
+                if phones:
                     for phone in phones:
                         self.data[key].add_phone(phone)
-                if birthday_key:
-                    self.data[key].set_birthday(Birthday(args[-1]))
+                if birthday:
+                    self.data[key].set_birthday(birthday)
                 return "Add data in record success"
-        phones = map(Phone, args[phone_key+1:birthday_key if birthday_key else len(args)]) if phone_key else []
-        record = Record(name, *phones, birthday=Birthday(args[-1]) if birthday_key else None)
+        record = Record(name, *phones, birthday=birthday)
         self.data[key] = record
         return "Add record success"
     
-    def change_record(self, *args):
-        len_args = len(args)
-        name_key, phone_key, birthday_key = tuple(args[1:4])
-        old_name = Name(args[name_key+1].title())
+    def change_record(self, old_name, new_name, *phones, birthday=None):
+        old_name = Name(old_name)
+        phones = list(map(Phone, phones))
+        birthday = Birthday(birthday)
         if not old_name:
             return "The old name is invalid"
-        new_name = None
-        if len_args - name_key != 2 and not args[name_key+2].startswith("-"):
-            new_name = args[name_key+2]
-            new_name = Name(args[name_key+2].title())
+        if new_name:
+            new_name = Name(new_name)
             if not new_name:
                 return "The new name is invalid"
-            if old_name == new_name:
-                return "Old and new names should be different"
             if str(new_name) in self.data.keys():
-                return "The new contact is already exist"
+                return "The contact with new name is already exist"
         key = str(old_name)
         if key in self.data.keys():
             if new_name:
@@ -180,18 +175,18 @@ class AddressBook(UserDict):
                 record = Record(new_name, *record.phones, birthday=record.birthday[0] if record.birthday else None)
                 key = str(new_name)
                 self.data[key] = record
-            if phone_key:
-                for el in enumerate(args[phone_key+1:birthday_key if birthday_key else len_args]):
+            if phones:
+                for el in enumerate(phones):
                     if not el[0] % 2:
-                        self.data[key].change_phone(Phone(args[el[0]+phone_key+1]), Phone(args[el[0]+phone_key+2]))
-            if birthday_key:
-                self.data[key].set_birthday(Birthday(args[-1]))
+                        self.data[key].change_phone(phones[el[0]], phones[el[0]+1])
+            if birthday:
+                self.data[key].set_birthday(birthday)
             return "Change record success"
         return "The contact is not found"
     
-    def remove_record(self, *args):
-        name_key, phone_key, birthday_key = tuple(args[1:4])
-        name = Name(args[name_key+1].title())
+    def remove_record(self, name, *phones, phone_key=None, birthday_key=None):
+        name = Name(name)
+        phones = list(map(Phone, phones))
         if not name:
             return "The name is invalid"
         key = str(name)
@@ -201,7 +196,6 @@ class AddressBook(UserDict):
                 return "Remove record success"
             else:
                 if phone_key:
-                    phones = map(Phone, args[phone_key+1:birthday_key if birthday_key else len(args)])
                     if phones:
                         for phone in phones:
                             self.data[key].remove_phone(phone)
@@ -211,27 +205,26 @@ class AddressBook(UserDict):
                     self.data[key].birthday.clear()
                 return "Remove data in record success"
     
-    def show(self, *args):
+    def show(self, name_string=None, phone_string=None):
         if not self.data:
             result = "The address book is empty"
-        elif args[1] == "all":
+        elif not name_string and not phone_string:
             result = ""
             for record in self.values():
                 result += str(record)
         else:
-            name_key, phone_key = tuple(args[1:3])
-            name_string = args[name_key+1] if name_key else None
-            phone_string = args[phone_key+1] if phone_key else None
             result = ""
             for key, record in self.items():
                 found_in_phones = False
-                if phone_key:
+                if phone_string:
                     for phone in record.phones:
                         if phone_string in phone.value:
                             found_in_phones = True
                             break
                 if (name_string and name_string.casefold() in key.casefold()) or found_in_phones:
                     result += str(record)
+        if not result:
+            return "Not found"
         return result
     
     def load_from_file(self, file_name):
